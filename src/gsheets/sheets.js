@@ -49,6 +49,7 @@ const create = async (auth, title = 'Demo Sheet') => {
 };
 
 const append = async (auth, id, records = []) => {
+  // TODO: validate format of records, and display helpful error message
   // TODO: look into this
   if (records.length > 100) {
     return Promise.reject(TOO_MANY_RECORDS_ERROR);

@@ -1,10 +1,25 @@
-# TODOs
+# Taro
+
+Taro is a tool that brings all your favorite integrations into one place, with
+simple abstractions over the most common use cases.
+
+## Why?
+
+TODO
+
+## Use cases
+
+Weekly report to slack
+
+## Getting started
 
 Install Taro client
 
 ```
 npm install taro-client
 ```
+
+## Docs
 
 Retrieve lambda functions from Taro
 
@@ -21,16 +36,18 @@ Set schedule for lambda
 
 ```js
 Taro.schedules.retrieve(token);
-Taro.schedules.update({frequency: 5, unit: 'minutes'});
-Taro.schedules.update({cron: '* * * * *'});
+Taro.schedules.update(token, {frequency: 5, unit: 'minutes'});
+Taro.schedules.update(token, {cron: '* * * * *'});
 // TODO: should this be handled in a separate namespace/table?
-Taro.schedules.update({date: '2020-09-01', retries: 10});
+Taro.schedules.update(token, {date: '2020-09-01', retries: 10});
 ```
 
 Trigger run lambda manually
 
 ```js
 Taro.lambdas.run(token);
+Taro.jobs.run(token);
+Taro.jobs.run('AFTER_USER_SIGNUP');
 ```
 
 Retrieve logs for a given lambda
@@ -119,6 +136,7 @@ Taro.storage.set(key, {...values});
 const db = await Taro.sheets.load('Hacker News Posts');
 
 Taro.sheets.retrieve(db);
+// Get the row with the matching link
 Taro.sheets.retrieve(db, {link: 'gettaro.com'});
 Taro.sheets.append(
   db,
@@ -174,6 +192,92 @@ const main = async () => {
 };
 
 module.exports = main;
+```
+
+Triggers?
+
+```js
+const sendWelcomeEmail = (userId) => {
+  const user = await Taro.db.sql(`select * from users where id = ?`, [userId]);
+
+  Taro.notify.email({
+    template: 'users.welcome',
+    data: {user},
+  });
+};
+
+const sendFollowupEmail = (userId) => {
+  const user = await Taro.db.sql(
+    `select * from users where id = ? and status = 'unactivated'`,
+    [userId]
+  );
+
+  Taro.notify.email({
+    template: 'users.followup',
+    data: {user},
+  });
+};
+
+
+const handleNewUserSignup = async (payload = {}) => {
+  const {user, metadata = {}} = payload;
+
+  // Send message to Slack to alert team about new signup
+  Taro.notify.slack({channel: 'bots', message: 'New user signup!'});
+  // Add row to Google Sheet 'Users' spreadsheet
+  Taro.gsheet.append('Users', [{name: user.name, email: user.email}]);
+  // Add row to Airtable 'Users' table
+  Taro.airtable.append('Users', [{name: user.name, email: user.email}]);
+
+  // TODO: look up existing libraries that do this!
+  // (e.g. AgendaJS with pre-installed MongoDB per user)
+  // Schedule tasks to be sent out at a specific time
+  Taro.scheduler.at(moment().add(40, 'minutes'), () => {
+    // Send email to new user with pre-defined template
+    Taro.email.send({
+      to: user.email,
+      template: 'users.welcome', // Define email templates in the dashboard!
+      data: {user},
+    });
+  });
+
+  Taro.scheduler.at(moment().add(3, 'days'), () => {
+    Taro.email.send({
+      to: user.email,
+      template: 'users.followup',
+      data: {user},
+    });
+  });
+};
+
+const generateWeeklyReport = async () => {
+  const signups = await Taro.db.sql(
+    `select * from users where created_at > ?`,
+    [moment().subtract(1, 'week')]
+  );
+  const chats = await Taro.intercom.chats({since: moment().subtract(1, 'week')});
+  const emails = await Taro.gmail.retrieve({
+    where: {label: 'taro', recipient: 'me@company.com'}
+  });
+  const payments = await Taro.stripe.charges({since: moment().subtract(1, 'week')});
+  const sentiment = await Taro.ai.analyze({
+    messages: [...chats.map(chat => chat.text), ...emails.map(email => email.body)],
+    type: 'sentiment_analysis',
+  })
+
+  const report = {
+    num_new_signups: signups.length,
+    num_new_intercom_chats: chats.length,
+    num_new_customer_emails: emails.length,
+    sentiment_analysis_description: sentiment.description,
+    payment_volume: payments.reduce((total, payment) => total + payment.amount, 0)
+  };
+
+  await Taro.gsheets.append('Weekly Report', report);
+  await Taro.airtable.append('Weekly Report', report);
+  await Taro.slack.notify({template: 'reports.weekly', data: report});
+};
+
 ```
 
 Scripts:

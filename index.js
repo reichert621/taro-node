@@ -1,7 +1,8 @@
-const email = require('./src/email');
-const scraper = require('./src/scraper');
-const slack = require('./src/slack');
-const sheets = require('./src/sheets');
+const email = require('./src/notifications/email');
+const slack = require('./src/notifications/slack');
+const hn = require('./src/scrapers/hn');
+const pg = require('./src/scrapers/pg');
+const sheets = require('./src/gsheets/sheets');
 
 const ping = () => 'Pong';
 
@@ -13,7 +14,8 @@ const client = (auth) => {
     wait,
     sleep: wait,
     scrape: {
-      hn: (...args) => scraper('hn', ...args),
+      hn: hn,
+      pg: pg,
     },
     notify: {
       email: (...args) => email(auth, ...args),
@@ -24,11 +26,12 @@ const client = (auth) => {
       retrieve: (...args) => sheets.retrieve(auth, ...args),
       append: (...args) => sheets.append(auth, ...args),
       update: (...args) => sheets.update(auth, ...args),
+      // TODO: `set` and `clear`
     },
   };
 };
 
-const emailErrorCode = `
+const EMAIL_ERROR_CODE = `
   const Taro = require('taro-client')(API_KEY);
 
   Taro.notify.email({
@@ -41,12 +44,12 @@ const emailErrorCode = `
 client.ping = ping;
 client.wait = wait;
 client.sleep = wait;
-client.scraper = scraper;
+client.scraper = {hn, pg};
 client.email = async () => {
   console.error(
     'This method has been deprecated. Please use the following instead:'
   );
-  console.error(emailErrorCode);
+  console.error(EMAIL_ERROR_CODE);
 };
 
 module.exports = client;
