@@ -1,6 +1,6 @@
 {
   "name": "taro-client",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Taro NodeJS client",
   "main": "index.js",
   "scripts": {
