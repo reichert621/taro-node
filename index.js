@@ -3,6 +3,7 @@ const slack = require('./src/notifications/slack');
 const hn = require('./src/scrapers/hn');
 const pg = require('./src/scrapers/pg');
 const sheets = require('./src/gsheets/sheets');
+const gmail = require('./src/gmail/email');
 
 const ping = () => 'Pong';
 
@@ -20,6 +21,9 @@ const client = (auth) => {
     notify: {
       email: (...args) => email(auth, ...args),
       slack: (...args) => slack(auth, ...args),
+    },
+    gmail: {
+      send: (...args) => gmail.send(auth, ...args),
     },
     sheets: {
       load: (...args) => sheets.load(auth, ...args),
