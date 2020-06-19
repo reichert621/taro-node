@@ -35,25 +35,4 @@ const client = (auth) => {
   };
 };
 
-const EMAIL_ERROR_CODE = `
-  const Taro = require('taro-client')(API_KEY);
-
-  Taro.notify.email({
-    to: 'name@me.com',
-    subject: 'Email subject line',
-    message: 'This can be text or HTML!',
-  })
-`;
-
-client.ping = ping;
-client.wait = wait;
-client.sleep = wait;
-client.scraper = {hn, pg};
-client.email = async () => {
-  console.error(
-    'This method has been deprecated. Please use the following instead:'
-  );
-  console.error(EMAIL_ERROR_CODE);
-};
-
 module.exports = client;
