@@ -4,7 +4,7 @@ const _ = require('lodash');
 
 // An example function that scrapes Hacker News and returns
 // all posts on the front page with more than 500 points
-const hn = async (threshold = 300) => {
+const hn = async ({threshold = 300}) => {
   return request.get('https://news.ycombinator.com/').then((res) => {
     const html = res.text;
     const $ = cheerio.load(html);
