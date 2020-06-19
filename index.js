@@ -4,6 +4,7 @@ const hn = require('./src/scrapers/hn');
 const pg = require('./src/scrapers/pg');
 const sheets = require('./src/gsheets/sheets');
 const gmail = require('./src/gmail/email');
+const lambdas = require('./src/lambdas/index');
 
 const ping = () => 'Pong';
 
@@ -31,6 +32,9 @@ const client = (auth) => {
       append: (...args) => sheets.append(auth, ...args),
       update: (...args) => sheets.update(auth, ...args),
       // TODO: `set` and `clear`
+    },
+    lambdas: {
+      run: (...args) => lambdas.run(auth, ...args),
     },
   };
 };
